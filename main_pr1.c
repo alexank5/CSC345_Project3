@@ -1,10 +1,10 @@
-//project 3
+//project 3 - FIFO Implementation
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <alloca.h>
 #include <sys/resource.h>
+#include <alloca.h>
 
 #define FRAME_SIZE 256        // size of the frame
 #define TOTAL_NUMBER_OF_FRAMES 256  // in Physical memory, this is total number of frames
