@@ -1,6 +1,7 @@
 //project 3 - FIFO Implementation
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/resource.h>
@@ -41,6 +42,10 @@ int init_avail_page_table_num = 0;  // counter in order to track the first avail
 
 int TLB_entries_numbers = 0;             // counter in order to track the number of entries in the TLB
 
+int logicalAddresses[1000];
+int physicalAddresses[1000];
+int8_t byteValue[1000];
+
 
 // Below is the input file and backing store
 
@@ -57,13 +62,13 @@ int   logical_address;
 
 signed char   buffer[BLOCK];
 
-// the value of the byte (signed char) in memory
+// the value of the byte (int8_t) in memory
 
-signed char   value;
+int8_t   value;
 
 // The headers for the functions used below 
 
-void retrieve_page(int address);
+void retrieve_page(int address, int index);
 
 void read_from_backing_store(int pageNumber);
 
@@ -71,7 +76,7 @@ void insert_to_TLB_with_FIFO(int pageNumber, int number_of_frame);
 
 // This function serves to take the logical address as well as obtain the physical address and value stored at that address
 
-void retrieve_page(int logical_address){
+void retrieve_page(int logical_address, int arrayIndex){
 
    // obtain the page number and offset from  logical address
 
@@ -132,7 +137,10 @@ void retrieve_page(int logical_address){
 
    // Next, output the virtual address, physical address and value of the signed char to the console
 
-   printf("Virtual address: %d Physical address: %d Value: %d\n", logical_address, (number_of_frame << 8) | offset, value);
+   //printf("Virtual address: %d Physical address: %d Value: %d\n", logical_address, (number_of_frame << 8) | offset, value);
+   logicalAddresses[arrayIndex] = logical_address;
+   physicalAddresses[arrayIndex] = (number_of_frame << 8) | offset;
+   byteValue[arrayIndex] = value;
 }
 
 // This function serves to insert a page number and frame number into the TLB with a FIFO replacement implementation
@@ -294,7 +302,8 @@ int main(int argc, char *argv[])
 
        // get the physical address and then value stored at that address
 
-       retrieve_page(logical_address);
+       retrieve_page(logical_address,numberOfTranslatedAddresses);
+       //printf("Virtual address: %d Physical address: %d Value: %d\n", logicalAddresses[numberOfTranslatedAddresses], physicalAddresses[numberOfTranslatedAddresses], byteValue[numberOfTranslatedAddresses]);
 
        numberOfTranslatedAddresses++;  // Here the program increments the number of translated addresses       
    }
@@ -315,25 +324,27 @@ int main(int argc, char *argv[])
 
    printf("TLB Hit Rate = %.3f\n", TLBRate);
 
-    /*
+    
    
    // Write Page Faults, Page Fault Rate, TLB Hits and TLB Hit Rate to out3.txt
 
-   FILE *f = fopen("out3.txt", "w");
-   if (f = NULL)
-   {
-       printf("Error opening and writing to out3.txt!\n");
-       exit(1);
-   }
+   FILE *f1 = fopen("out1.txt", "wt");
+   FILE *f2 = fopen("out2.txt", "wt");
+   FILE *f3 = fopen("out3.txt", "wt");
 
-   fprintf(f, "Number of translated addresses = %d, Page Faults = %d, Page Fault Rate = %.3f, TLB Hits = %d, TLB Hit Rate = %.3f\n", numberOfTranslatedAddresses, faults_of_page, pfRate, hits_of_TLB,TLBRate);
-   */
+   for(int a = 0; a < 1000; a++){
+      fprintf(f1, "%d\n", logicalAddresses[a]);
+      fprintf(f2, "%d\n", physicalAddresses[a]);
+      fprintf(f3, "%d\n", byteValue[a]);
+   }
    
    // close the input and backing store files
 
    fclose(address_file);
    fclose(backing_store);
-  // fclose(f);
+   fclose(f1);
+   fclose(f2);
+   fclose(f3);
    return 0;
 
 }
