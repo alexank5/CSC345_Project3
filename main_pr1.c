@@ -74,6 +74,8 @@ void read_from_backing_store(int pageNumber);
 
 void insert_to_TLB_with_FIFO(int pageNumber, int number_of_frame);
 
+void insert_to_TLB_with_LRU(int pageNumber, int number_of_frame); 
+
 // This function serves to take the logical address as well as obtain the physical address and value stored at that address
 
 void retrieve_page(int logical_address, int arrayIndex){
@@ -214,6 +216,19 @@ void insert_to_TLB_with_FIFO(int pageNumber, int number_of_frame){
        TLB_entries_numbers++;
    }   
 }
+
+void insert_to_TLB_with_LRU(int pageNumber, int number_of_frame){
+    int i; 
+
+   for(i = 0; i < TLB_entries_numbers; i++){
+
+       if(page_num_TLB[i] == pageNumber){
+
+           break;
+       }
+   }    
+} 
+
 // Here this function serves to read from the backing store and bring the frame into physical memory and the page table
 
 void read_from_backing_store(int pageNumber){
