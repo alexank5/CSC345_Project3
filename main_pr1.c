@@ -131,9 +131,9 @@ void retrieve_page(int logical_address, int arrayIndex){
 
     //output the frame number and offset to the console
 
-    printf("frame number: %d\n", number_of_frame); 
+    //printf("frame number: %d\n", number_of_frame); 
 
-    printf("offset: %d\n", offset);
+    //printf("offset: %d\n", offset);
 
    // Next, output the virtual address, physical address and value of the signed char to the console
 
@@ -310,19 +310,19 @@ int main(int argc, char *argv[])
 
    // calculate and print out the statistics the program obtained
 
-   printf("Number of translated addresses = %d\n", numberOfTranslatedAddresses);
+   //printf("Number of translated addresses = %d\n", numberOfTranslatedAddresses);
 
    double pfRate = faults_of_page / (double)numberOfTranslatedAddresses;
 
    double TLBRate = hits_of_TLB / (double)numberOfTranslatedAddresses;
 
-   printf("Page Faults = %d\n", faults_of_page);
+   //printf("Page Faults = %d\n", faults_of_page);
 
-   printf("Page Fault Rate = %.3f\n",pfRate);
+   printf("Page Fault Rate = %.3f%%\n",pfRate*100);
 
-   printf("TLB Hits = %d\n", hits_of_TLB);
+   //printf("TLB Hits = %d\n", hits_of_TLB);
 
-   printf("TLB Hit Rate = %.3f\n", TLBRate);
+   printf("TLB Hit Rate = %.3f%%\n", TLBRate*100);
 
     
    
