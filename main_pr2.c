@@ -1,4 +1,4 @@
-//project 3 - FIFO Implementation
+//project 3 - LRU Implementation
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -20,8 +20,7 @@
 // number of bytes to read
 
 #define BLOCK   256
-
-
+ 
 int table_num_page[PAGE_TABLE_SIZE];  // this array holds the page numbers in the page table
 
 int frame_table_page[PAGE_TABLE_SIZE];   // this array holds the frame numbers in the page table
@@ -41,6 +40,8 @@ int init_avail_frame = 0;  // counter in order to track the first available fram
 int init_avail_page_table_num = 0;  // counter in order to track the first available page table entry
 
 int TLB_entries_numbers = 0;             // counter in order to track the number of entries in the TLB
+
+int count[TLB_SIZE];
 
 int logicalAddresses[1000];
 int physicalAddresses[1000];
@@ -72,7 +73,7 @@ void retrieve_page(int address, int index);
 
 void read_from_backing_store(int pageNumber);
 
-void insert_to_TLB_with_FIFO(int pageNumber, int number_of_frame); 
+void insert_to_TLB_with_LRU(int pageNumber, int number_of_frame); 
 
 // This function serves to take the logical address as well as obtain the physical address and value stored at that address
 
@@ -125,7 +126,7 @@ void retrieve_page(int logical_address, int arrayIndex){
        }
    }
 
-   insert_to_TLB_with_FIFO(pageNumber, number_of_frame);  // Her is the call to function to insert the page number and frame number into the TLB
+   insert_to_TLB_with_LRU(pageNumber, number_of_frame);  // Her is the call to function to insert the page number and frame number into the TLB
 
    value = phys_memory[number_of_frame][offset];  // frame number and offset is used in order to obtain the signed value stored at that address
 
@@ -141,78 +142,6 @@ void retrieve_page(int logical_address, int arrayIndex){
    logicalAddresses[arrayIndex] = logical_address;
    physicalAddresses[arrayIndex] = (number_of_frame << 8) | offset;
    byteValue[arrayIndex] = value;
-}
-
-// This function serves to insert a page number and frame number into the TLB with a FIFO replacement implementation
-
-void insert_to_TLB_with_FIFO(int pageNumber, int number_of_frame){
-
-   int i;  // if it's already in the TLB, then prompt program to break
-
-   for(i = 0; i < TLB_entries_numbers; i++){
-
-       if(page_num_TLB[i] == pageNumber){
-
-           break;
-       }
-   }
-
-   // if the number of entries is equal to (=) the index
-
-   if(i == TLB_entries_numbers){
-
-       if(TLB_entries_numbers < TLB_SIZE){  // Also the TLB still has space in it
-
-           page_num_TLB[TLB_entries_numbers] = pageNumber;    // insert the page and frame at the end
-
-           frame_num_TLB[TLB_entries_numbers] = number_of_frame;
-       }
-
-       else{          // If not equal then move everything over
-
-           for(i = 0; i < TLB_SIZE - 1; i++){
-
-               page_num_TLB[i] = page_num_TLB[i + 1];
-
-               frame_num_TLB[i] = frame_num_TLB[i + 1];
-           }
-
-           page_num_TLB[TLB_entries_numbers-1] = pageNumber;  // and then also insert the page and frame on the end
-
-           frame_num_TLB[TLB_entries_numbers-1] = number_of_frame;
-       }       
-   }
-
-   // if the index is not equal to (=) the number of entries
-
-   else{
-
-       for(i = i; i < TLB_entries_numbers - 1; i++){      // Here we iterate through up to one less than the number of entries
-
-           page_num_TLB[i] = page_num_TLB[i + 1];      // Shift everything over in the arrays
-
-           frame_num_TLB[i] = frame_num_TLB[i + 1];
-       }
-
-
-       if(TLB_entries_numbers < TLB_SIZE){                // if there is still space in the array, then place the page and frame on the end
-
-           page_num_TLB[TLB_entries_numbers] = pageNumber;
-
-           frame_num_TLB[TLB_entries_numbers] = number_of_frame;
-       }
-
-       else{                                             // otherwise put the page and frame on the number of entries - 1
-           page_num_TLB[TLB_entries_numbers-1] = pageNumber;
-
-           frame_num_TLB[TLB_entries_numbers-1] = number_of_frame;
-       }
-   }
-
-   if(TLB_entries_numbers < TLB_SIZE){                    // if there is still space in the arrays, then increment the number of entries
-
-       TLB_entries_numbers++;
-   }   
 }
 
 // Here this function serves to read from the backing store and bring the frame into physical memory and the page table
@@ -255,6 +184,87 @@ void read_from_backing_store(int pageNumber){
 
    init_avail_page_table_num++;
 }
+
+void insert_to_TLB_with_LRU(int pageNumber, int number_of_frame){
+
+    int i;  // if it's already in the TLB, then prompt program to break
+    int max; 
+
+    for(i = 0; i < TLB_entries_numbers; i++){
+
+        if(page_num_TLB[i] == pageNumber){
+            count[i] = 0;
+            break;
+        }
+    }
+
+   // if the number of entries is equal to (=) the index
+
+    if(i == TLB_entries_numbers){
+
+        if(TLB_entries_numbers < TLB_SIZE){  // Also the TLB still has space in it
+
+            page_num_TLB[TLB_entries_numbers] = pageNumber;    // insert the page and frame at the end
+
+            frame_num_TLB[TLB_entries_numbers] = number_of_frame;
+        }
+
+        else{          // If not equal then find LRU
+            max = 0;
+            for(i = 0; i < TLB_SIZE - 1; i++){
+                if(count[i] > max){
+                    max = i;
+                }
+            }
+        }
+        page_num_TLB[max] = pageNumber;
+        frame_num_TLB[max] = number_of_frame; 
+    }       
+
+   // if the index is not equal to (=) the number of entries
+
+    else{
+
+        for(i = i; i < TLB_entries_numbers - 1; i++){      // Here we iterate through up to one less than the number of entries
+
+            page_num_TLB[i] = page_num_TLB[i + 1];      // Shift everything over in the arrays
+
+            frame_num_TLB[i] = frame_num_TLB[i + 1];
+        }
+
+
+        if(TLB_entries_numbers < TLB_SIZE){                // if there is still space in the array, then place the page and frame on the end
+
+            page_num_TLB[TLB_entries_numbers] = pageNumber;
+
+            frame_num_TLB[TLB_entries_numbers] = number_of_frame;
+        }
+
+        else{                                             // otherwise put the page and frame on the number of entries - 1
+            max = 0;
+            for(i = 0; i < TLB_SIZE - 1; i++){
+                if(count[i] > max){
+                max = i;
+                }
+            }
+            page_num_TLB[max] = pageNumber;
+            frame_num_TLB[max] = number_of_frame; 
+        }
+    }
+
+    if(TLB_entries_numbers < TLB_SIZE){                    // if there is still space in the arrays, then increment the number of entries
+        if(TLB_entries_numbers == 0){
+            for(i = 0; i < TLB_SIZE; ++i){
+                count[i] = 0;
+            }
+        }
+        TLB_entries_numbers++;
+        for (i = 0; i < TLB_entries_numbers; i++){
+            count[i] += 1; 
+        }
+    }   
+}
+
 
 // main will open necessary files and then call on retrieve_page for every entry that is located in the addresses file
 
@@ -349,4 +359,3 @@ int main(int argc, char *argv[])
    return 0;
 
 }
-
